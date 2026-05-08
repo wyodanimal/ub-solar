@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f1a">
+<title>UB Solar Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface2: #1a2436;
+    --border: #2a3a50;
+    --accent: #f59e0b;
+    --accent2: #10b981;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .pending-badge {
+    background: var(--danger);
+    color: white;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    display: none;
+  }
+
+  .pending-badge.visible { display: block; }
+
+  .section {
+    margin: 12px 12px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: var(--surface2);
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-body { padding: 12px; }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .field-row:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+
+  input[type="text"], input[type="number"], select, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 10px 12px;
+    flex: 1;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #0f1a2a;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f59e0b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .setting-row:last-child { margin-bottom: 0; }
+
+  .setting-value {
+    font-family: var(--mono);
+    font-size: 20px;
+    color: var(--accent);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    flex: 1;
+    cursor: pointer;
+  }
+
+  .edit-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .edit-btn:active { background: var(--border); }
+
+  /* Timer display */
+  .timer-display {
+    font-family: var(--mono);
+    font-size: 42px;
+    color: var(--accent);
+    text-align: center;
+    padding: 16px 0 8px;
+    letter-spacing: 4px;
+  }
+
+  .timer-display.running { color: var(--accent2); }
+
+  .timer-status {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+
+  .timer-status.running { color: var(--accent2); }
+
+  /* Big buttons */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.1s, transform 0.1s;
+  }
+
+  .btn:active { opacity: 0.85; transform: scale(0.98); }
+
+  .btn-start {
+    background: var(--accent2);
+    color: #fff;
+  }
+
+  .btn-stop {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  .btn-submit {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn-sync {
+    background: var(--surface2);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    margin-top: 8px;
+  }
+
+  .btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* Two column voltage grid */
+  .volt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .volt-group {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .volt-group-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .volt-group-title.b2 { color: var(--accent2); }
+
+  .volt-field { margin-bottom: 8px; }
+  .volt-field:last-child { margin-bottom: 0; }
+
+  .volt-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .volt-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 18px;
+    padding: 9px 8px;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: center;
+  }
+
+  .volt-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #0f1a2a;
+  }
+
+  .calc-value {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--accent2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 9px 8px;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* Bike row - single wide */
+  .bike-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  /* Sessions log */
+  .session-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .session-item:last-child { margin-bottom: 0; }
+
+  .session-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .session-wh {
+    font-family: var(--mono);
+    font-size: 20px;
+    color: var(--accent);
+  }
+
+  .session-status {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  .status-pending {
+    background: rgba(239,68,68,0.2);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+
+  .status-synced {
+    background: rgba(16,185,129,0.2);
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 70px;
+    font-size: 14px;
+  }
+
+  .inline-edit {
+    display: none;
+    flex: 1;
+  }
+
+  .inline-edit.visible { display: block; }
+
+  .gap-top { margin-top: 10px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .full-col { grid-column: 1 / -1; }
+
+  .wh-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .wh-group { text-align: center; }
+
+  .wh-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 12px 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 20px;
+  }
+
+  .btn-clear-one {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 13px;
+    padding: 10px;
+    width: 100%;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .btn-clear-all {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 13px;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .btn-clear-all:active, .btn-clear-one:active { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ UB SOLAR</h1>
+  <span class="pending-badge" id="pendingBadge">0 PENDING</span>
+</header>
+
+<!-- PERSISTENT SETTINGS -->
+<div class="section">
+  <div class="section-header">Session Settings</div>
+  <div class="section-body">
+
+    <div class="setting-row">
+      <label>Trip</label>
+      <select id="tripSelect" onchange="onTripSelect()" style="flex:1;font-size:16px;padding:10px 12px;">
+        <option value="">— Select Trip —</option>
+      </select>
+    </div>
+    <div id="newTripRow" style="display:none;margin-top:8px;">
+      <input type="text" id="newTripInput" placeholder="Enter new trip name" style="width:100%;margin-bottom:8px;" onkeydown="if(event.key==='Enter')saveNewTrip()">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-submit" style="padding:12px;font-size:14px;" onclick="saveNewTrip()">ADD TRIP</button>
+        <button class="edit-btn" style="flex:1;padding:12px;" onclick="cancelNewTrip()">CANCEL</button>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <label>MPPT Set</label>
+      <div class="setting-value" id="mpptDisplay" onclick="editSetting('mppt')">54.4V</div>
+      <button class="edit-btn" onclick="editSetting('mppt')">EDIT</button>
+    </div>
+    <input type="text" class="inline-edit" id="mpptInput" placeholder="e.g. 54.4V" onblur="saveSetting('mppt')" onkeydown="if(event.key==='Enter')saveSetting('mppt')">
+
+  </div>
+</div>
+
+<!-- TIMER -->
+<div class="section">
+  <div class="section-header">Charge Timer</div>
+  <div class="section-body">
+    <div class="timer-display" id="timerDisplay">00:00:00</div>
+    <div class="timer-status" id="timerStatus">NOT STARTED</div>
+    <button class="btn btn-start" id="startBtn" onclick="startTimer()">▶ START CHARGING</button>
+    <button class="btn btn-stop" id="stopBtn" onclick="stopTimer()" disabled style="margin-top:10px">■ STOP CHARGING</button>
+  </div>
+</div>
+
+<!-- VOLTAGES -->
+<div class="section">
+  <div class="section-header">Analyzer Voltages</div>
+  <div class="section-body">
+
+    <div class="volt-grid">
+      <!-- BATT 1 -->
+      <div class="volt-group">
+        <div class="volt-group-title">BATT 1</div>
+        <div class="volt-field">
+          <div class="volt-label">Start V</div>
+          <input type="number" class="volt-input" id="b1StartV" step="0.01" placeholder="00.00" oninput="calcGain('b1')">
+        </div>
+        <div class="volt-field">
+          <div class="volt-label">End V</div>
+          <input type="number" class="volt-input" id="b1EndV" step="0.01" placeholder="00.00" oninput="calcGain('b1')">
+        </div>
+        <div class="volt-field">
+          <div class="volt-label">V Gain</div>
+          <div class="calc-value" id="b1VGain">—</div>
+        </div>
+      </div>
+
+      <!-- BATT 2 -->
+      <div class="volt-group">
+        <div class="volt-group-title b2">BATT 2</div>
+        <div class="volt-field">
+          <div class="volt-label">Start V</div>
+          <input type="number" class="volt-input" id="b2StartV" step="0.01" placeholder="00.00" oninput="calcGain('b2')">
+        </div>
+        <div class="volt-field">
+          <div class="volt-label">End V</div>
+          <input type="number" class="volt-input" id="b2EndV" step="0.01" placeholder="00.00" oninput="calcGain('b2')">
+        </div>
+        <div class="volt-field">
+          <div class="volt-label">V Gain</div>
+          <div class="calc-value" id="b2VGain">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIKE VOLTAGE -->
+    <hr class="divider">
+    <div class="section-header" style="margin: 0 -12px; border-radius:0; font-size:10px;">Bike Display (Combined)</div>
+    <div class="bike-row" style="margin-top:10px">
+      <div class="volt-field">
+        <div class="volt-label">Start V</div>
+        <input type="number" class="volt-input" id="bikeStartV" step="0.01" placeholder="00.00" oninput="calcGain('bike')">
+      </div>
+      <div class="volt-field">
+        <div class="volt-label">End V</div>
+        <input type="number" class="volt-input" id="bikeEndV" step="0.01" placeholder="00.00" oninput="calcGain('bike')">
+      </div>
+      <div class="volt-field">
+        <div class="volt-label">V Gain</div>
+        <div class="calc-value" id="bikeVGain">—</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- WATT HOURS -->
+<div class="section">
+  <div class="section-header">Watt Hours</div>
+  <div class="section-body">
+    <div class="wh-row">
+      <div class="wh-group">
+        <div class="wh-label">Batt 1 Wh</div>
+        <input type="number" class="volt-input" id="b1Wh" step="0.1" placeholder="000.0" oninput="calcTotalWh()">
+      </div>
+      <div class="wh-group">
+        <div class="wh-label">Batt 2 Wh</div>
+        <input type="number" class="volt-input" id="b2Wh" step="0.1" placeholder="000.0" oninput="calcTotalWh()">
+      </div>
+      <div class="wh-group">
+        <div class="wh-label">Total Wh</div>
+        <div class="calc-value" id="totalWh">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONDITIONS -->
+<div class="section">
+  <div class="section-header">Conditions</div>
+  <div class="section-body">
+    <div class="two-col">
+      <div>
+        <label style="display:block;margin-bottom:5px">Sky</label>
+        <select id="conditions">
+          <option value="">— Select —</option>
+          <option>Full Sun</option>
+          <option>Mostly Sunny</option>
+          <option>Partly Cloudy</option>
+          <option>Cloudy</option>
+          <option>Smoky/Hazy</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;margin-bottom:5px">Temp</label>
+        <select id="tempRange">
+          <option value="">— Select —</option>
+          <option>Below 50f</option>
+          <option>51-65f</option>
+          <option>65-80f</option>
+          <option>80f+</option>
+        </select>
+      </div>
+      <div class="full-col">
+        <label style="display:block;margin-bottom:5px">Elevation</label>
+        <select id="elevation">
+          <option value="">— Select —</option>
+          <option>Below 5000ft</option>
+          <option>5001-7000ft</option>
+          <option>7001-9000ft</option>
+          <option>9001ft+</option>
+        </select>
+      </div>
+      <div class="full-col">
+        <label style="display:block;margin-bottom:5px">Notes</label>
+        <textarea id="notes" placeholder="Optional — anything worth noting about this session"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT -->
+<div class="section">
+  <div class="section-body">
+    <button class="btn btn-submit" onclick="saveSession()">💾 SAVE SESSION</button>
+    <button class="btn btn-sync" id="syncBtn" onclick="syncPending()">☁ SYNC TO SHEETS</button>
+  </div>
+</div>
+
+<!-- SESSION LOG -->
+<div class="section">
+  <div class="section-header">Saved Sessions</div>
+  <div class="section-body" id="sessionLog">
+    <div class="empty-state">No sessions saved yet</div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2OHfi7d2AltsGchaUVnGzg9rHbmb7_w7lKI_Xmg5dDnTX_n86EgC4v_GMdLAaOkFo/exec';
+
+// ── State ──────────────────────────────────────────────
+let timerInterval = null;
+let startTimestamp = null;
+let startTimeStr = '';
+let stopTimeStr = '';
+let elapsedSeconds = 0;
+let isRunning = false;
+
+// ── Init ───────────────────────────────────────────────
+window.addEventListener('load', () => {
+  loadSettings();
+  renderLog();
+  updatePendingBadge();
+});
+
+// ── Persistent Settings ────────────────────────────────
+function loadSettings() {
+  const mppt = localStorage.getItem('ub_mppt') || '54.4V';
+  document.getElementById('mpptDisplay').textContent = mppt;
+  document.getElementById('mpptInput').value = mppt;
+  initTripDropdown();
+}
+
+// ── Trip Dropdown ──────────────────────────────────────
+function getTrips() {
+  try { return JSON.parse(localStorage.getItem('ub_trips')) || getDefaultTrips(); }
+  catch { return getDefaultTrips(); }
+}
+
+function getDefaultTrips() {
+  return [{ name: 'Day Rides', lastUsed: 0, count: 0 }];
+}
+
+function saveTrips(trips) {
+  localStorage.setItem('ub_trips', JSON.stringify(trips));
+}
+
+function initTripDropdown() {
+  const trips = getTrips();
+  // Save defaults if nothing stored yet
+  if (!localStorage.getItem('ub_trips')) saveTrips(trips);
+  renderTripDropdown(trips);
+
+  // Restore last selected trip
+  const lastTrip = localStorage.getItem('ub_trip') || '';
+  const select = document.getElementById('tripSelect');
+  if (lastTrip) {
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === lastTrip) {
+        select.selectedIndex = i;
+        break;
+      }
+    }
+  }
+}
+
+function renderTripDropdown(trips) {
+  const select = document.getElementById('tripSelect');
+  const current = select.value;
+
+  // Sort by most recently used, then alphabetically
+  const sorted = [...trips].sort((a, b) => b.lastUsed - a.lastUsed || a.name.localeCompare(b.name));
+
+  select.innerHTML = '<option value="">— Select Trip —</option>' +
+    '<option value="__new__">+ Add New Trip</option>' +
+    sorted.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+
+  // Restore selection if possible
+  if (current) {
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === current) { select.selectedIndex = i; break; }
+    }
+  }
+}
+
+function onTripSelect() {
+  const val = document.getElementById('tripSelect').value;
+  if (val === '__new__') {
+    document.getElementById('newTripRow').style.display = 'block';
+    document.getElementById('newTripInput').focus();
+    document.getElementById('tripSelect').value = '';
+  } else if (val) {
+    localStorage.setItem('ub_trip', val);
+    document.getElementById('newTripRow').style.display = 'none';
+  }
+}
+
+function saveNewTrip() {
+  const name = document.getElementById('newTripInput').value.trim();
+  if (!name) { alert('Enter a trip name'); return; }
+
+  const trips = getTrips();
+  if (trips.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+    alert('A trip with that name already exists');
+    return;
+  }
+
+  trips.push({ name, lastUsed: Date.now(), count: 0 });
+  saveTrips(trips);
+  localStorage.setItem('ub_trip', name);
+  renderTripDropdown(trips);
+
+  // Select the new trip
+  const select = document.getElementById('tripSelect');
+  for (let i = 0; i < select.options.length; i++) {
+    if (select.options[i].value === name) { select.selectedIndex = i; break; }
+  }
+
+  document.getElementById('newTripRow').style.display = 'none';
+  document.getElementById('newTripInput').value = '';
+}
+
+function cancelNewTrip() {
+  document.getElementById('newTripRow').style.display = 'none';
+  document.getElementById('newTripInput').value = '';
+  document.getElementById('tripSelect').value = localStorage.getItem('ub_trip') || '';
+}
+
+function markTripUsed(tripName) {
+  const trips = getTrips();
+  const trip = trips.find(t => t.name === tripName);
+  if (trip) {
+    trip.lastUsed = Date.now();
+    trip.count = (trip.count || 0) + 1;
+    saveTrips(trips);
+    renderTripDropdown(trips);
+  }
+}
+
+function editSetting(key) {
+  const inputId = key === 'mppt' ? 'mpptInput' : null;
+  if (!inputId) return;
+  const input = document.getElementById(inputId);
+  input.classList.add('visible');
+  input.focus();
+  input.select();
+}
+
+function saveSetting(key) {
+  const inputId = key === 'trip' ? 'tripInput' : 'mpptInput';
+  const displayId = key === 'trip' ? 'tripDisplay' : 'mpptDisplay';
+  const storageKey = key === 'trip' ? 'ub_trip' : 'ub_mppt';
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (val) {
+    localStorage.setItem(storageKey, val);
+    document.getElementById(displayId).textContent = val;
+  }
+  input.classList.remove('visible');
+}
+
+// ── Timer ──────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function formatTime(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function formatHHMM(date) {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function formatDate(date) {
+  return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+}
+
+function startTimer() {
+  if (isRunning) return;
+  startTimestamp = new Date();
+  startTimeStr = formatHHMM(startTimestamp);
+  isRunning = true;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('stopBtn').disabled = false;
+  document.getElementById('timerDisplay').classList.add('running');
+  document.getElementById('timerStatus').classList.add('running');
+  document.getElementById('timerStatus').textContent = `STARTED ${startTimeStr}`;
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    document.getElementById('timerDisplay').textContent = formatTime(elapsedSeconds);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (!isRunning) return;
+  clearInterval(timerInterval);
+  isRunning = false;
+  const stopDate = new Date();
+  stopTimeStr = formatHHMM(stopDate);
+  document.getElementById('stopBtn').disabled = true;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('timerDisplay').classList.remove('running');
+  document.getElementById('timerStatus').classList.remove('running');
+  document.getElementById('timerStatus').textContent = `STOPPED ${stopTimeStr} — ${formatTime(elapsedSeconds)}`;
+}
+
+// ── Calculated Fields ──────────────────────────────────
+function calcGain(which) {
+  if (which === 'b1') {
+    const s = parseFloat(document.getElementById('b1StartV').value);
+    const e = parseFloat(document.getElementById('b1EndV').value);
+    document.getElementById('b1VGain').textContent = (!isNaN(s) && !isNaN(e)) ? (e - s).toFixed(2) : '—';
+  } else if (which === 'b2') {
+    const s = parseFloat(document.getElementById('b2StartV').value);
+    const e = parseFloat(document.getElementById('b2EndV').value);
+    document.getElementById('b2VGain').textContent = (!isNaN(s) && !isNaN(e)) ? (e - s).toFixed(2) : '—';
+  } else if (which === 'bike') {
+    const s = parseFloat(document.getElementById('bikeStartV').value);
+    const e = parseFloat(document.getElementById('bikeEndV').value);
+    document.getElementById('bikeVGain').textContent = (!isNaN(s) && !isNaN(e)) ? (e - s).toFixed(2) : '—';
+  }
+}
+
+function calcTotalWh() {
+  const b1 = parseFloat(document.getElementById('b1Wh').value);
+  const b2 = parseFloat(document.getElementById('b2Wh').value);
+  document.getElementById('totalWh').textContent = (!isNaN(b1) && !isNaN(b2)) ? (b1 + b2).toFixed(1) : '—';
+}
+
+// ── Save Session ───────────────────────────────────────
+function saveSession() {
+  const trip = localStorage.getItem('ub_trip') || '';
+  if (!trip) { alert('Select a trip first'); return; }
+  if (!startTimeStr) { alert('Start the timer first'); return; }
+  if (!stopTimeStr) { alert('Stop the timer first'); return; }
+
+  const b1s = document.getElementById('b1StartV').value;
+  const b1e = document.getElementById('b1EndV').value;
+  const b2s = document.getElementById('b2StartV').value;
+  const b2e = document.getElementById('b2EndV').value;
+
+  if (!b1s || !b1e || !b2s || !b2e) { alert('Enter all analyzer voltages'); return; }
+
+  const now = startTimestamp || new Date();
+  const session = {
+    id: Date.now(),
+    synced: false,
+    date: formatDate(now),
+    tripName: trip,
+    startTime: startTimeStr,
+    endTime: stopTimeStr,
+    elapsed: formatTime(elapsedSeconds),
+    mpptSet: localStorage.getItem('ub_mppt') || '54.4V',
+    batt1AnalyzerStartV: parseFloat(b1s),
+    batt1AnalyzerEndV: parseFloat(b1e),
+    batt1AnalyzerVGain: parseFloat((parseFloat(b1e) - parseFloat(b1s)).toFixed(2)),
+    batt1WhGain: parseFloat(document.getElementById('b1Wh').value) || 0,
+    batt2AnalyzerStartV: parseFloat(b2s),
+    batt2AnalyzerEndV: parseFloat(b2e),
+    batt2AnalyzerVGain: parseFloat((parseFloat(b2e) - parseFloat(b2s)).toFixed(2)),
+    batt2WhGain: parseFloat(document.getElementById('b2Wh').value) || 0,
+    totalWh: parseFloat(document.getElementById('totalWh').textContent) || 0,
+    bikeStartV: parseFloat(document.getElementById('bikeStartV').value) || '',
+    bikeEndV: parseFloat(document.getElementById('bikeEndV').value) || '',
+    bikeVGain: document.getElementById('bikeVGain').textContent !== '—' ? parseFloat(document.getElementById('bikeVGain').textContent) : '',
+    conditions: document.getElementById('conditions').value,
+    tempRange: document.getElementById('tempRange').value,
+    elevation: document.getElementById('elevation').value,
+    notes: document.getElementById('notes').value.trim()
+  };
+
+  const sessions = getSessions();
+  sessions.push(session);
+  localStorage.setItem('ub_sessions', JSON.stringify(sessions));
+
+  markTripUsed(trip);
+  resetForm();
+  renderLog();
+  updatePendingBadge();
+  alert('Session saved ✓');
+}
+
+function resetForm() {
+  // Reset timer
+  clearInterval(timerInterval);
+  timerInterval = null;
+  startTimestamp = null;
+  startTimeStr = '';
+  stopTimeStr = '';
+  elapsedSeconds = 0;
+  isRunning = false;
+  document.getElementById('timerDisplay').textContent = '00:00:00';
+  document.getElementById('timerDisplay').classList.remove('running');
+  document.getElementById('timerStatus').textContent = 'NOT STARTED';
+  document.getElementById('timerStatus').classList.remove('running');
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('stopBtn').disabled = true;
+
+  // Reset voltage/wh fields
+  ['b1StartV','b1EndV','b2StartV','b2EndV','bikeStartV','bikeEndV','b1Wh','b2Wh'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['b1VGain','b2VGain','bikeVGain','totalWh'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+
+  // Reset conditions
+  document.getElementById('conditions').value = '';
+  document.getElementById('tempRange').value = '';
+  document.getElementById('elevation').value = '';
+  document.getElementById('notes').value = '';
+}
+
+// ── Storage ────────────────────────────────────────────
+function getSessions() {
+  try { return JSON.parse(localStorage.getItem('ub_sessions')) || []; }
+  catch { return []; }
+}
+
+function updatePendingBadge() {
+  const pending = getSessions().filter(s => !s.synced).length;
+  const badge = document.getElementById('pendingBadge');
+  if (pending > 0) {
+    badge.textContent = `${pending} PENDING`;
+    badge.classList.add('visible');
+  } else {
+    badge.classList.remove('visible');
+  }
+}
+
+// ── Render Log ─────────────────────────────────────────
+function renderLog() {
+  const sessions = getSessions();
+  const log = document.getElementById('sessionLog');
+  if (sessions.length === 0) {
+    log.innerHTML = '<div class="empty-state">No sessions saved yet</div>';
+    return;
+  }
+
+  const syncedCount = sessions.filter(s => s.synced).length;
+  const clearAllBtn = syncedCount > 1
+    ? `<button class="btn btn-clear-all" onclick="clearAllSynced()" style="margin-bottom:10px">🗑 CLEAR ALL SYNCED (${syncedCount})</button>`
+    : '';
+
+  log.innerHTML = clearAllBtn + sessions.slice().reverse().map(s => `
+    <div class="session-item">
+      <span class="session-status ${s.synced ? 'status-synced' : 'status-pending'}">${s.synced ? 'SYNCED' : 'PENDING'}</span>
+      <div class="session-meta">${s.date} — ${s.tripName} — ${s.startTime} → ${s.endTime}</div>
+      <div class="session-wh">${s.totalWh} Wh total</div>
+      <div class="session-meta" style="margin-top:4px">B1: ${s.batt1AnalyzerStartV}→${s.batt1AnalyzerEndV}V (${s.batt1WhGain}Wh) &nbsp;|&nbsp; B2: ${s.batt2AnalyzerStartV}→${s.batt2AnalyzerEndV}V (${s.batt2WhGain}Wh)</div>
+      ${s.conditions ? `<div class="session-meta" style="margin-top:2px">${s.conditions} · ${s.tempRange} · ${s.elevation}</div>` : ''}
+      ${s.synced ? `<button class="btn btn-clear-one" onclick="clearSession(${s.id})" style="margin-top:10px">🗑 CLEAR THIS SESSION</button>` : '<div class="session-meta" style="margin-top:8px;color:#ef4444">⚠ PENDING — sync before clearing</div>'}
+    </div>
+  `).join('');
+}
+
+// ── Clear Sessions ─────────────────────────────────────
+function clearSession(id) {
+  const confirmed = confirm(
+    '⚠ DELETE THIS SESSION?\n\nOnly do this after you have verified this session appears correctly in your Google Sheet.\n\nThis cannot be undone.'
+  );
+  if (!confirmed) return;
+  const sessions = getSessions().filter(s => s.id !== id);
+  localStorage.setItem('ub_sessions', JSON.stringify(sessions));
+  renderLog();
+  updatePendingBadge();
+}
+
+function clearAllSynced() {
+  const sessions = getSessions();
+  const syncedCount = sessions.filter(s => s.synced).length;
+  const confirmed = confirm(
+    `⚠ DELETE ${syncedCount} SYNCED SESSIONS?\n\nOnly do this after you have verified ALL sessions appear correctly in your Google Sheet.\n\nThis cannot be undone.`
+  );
+  if (!confirmed) return;
+  const remaining = sessions.filter(s => !s.synced);
+  localStorage.setItem('ub_sessions', JSON.stringify(remaining));
+  renderLog();
+  updatePendingBadge();
+}
+
+// ── Sync to Sheets ─────────────────────────────────────
+async function syncPending() {
+  const sessions = getSessions();
+  const pending = sessions.filter(s => !s.synced);
+  if (pending.length === 0) { alert('Nothing pending to sync'); return; }
+
+  const btn = document.getElementById('syncBtn');
+  btn.textContent = `⏳ SYNCING ${pending.length}...`;
+  btn.disabled = true;
+
+  let attemptCount = 0;
+  let errorCount = 0;
+
+  for (const session of pending) {
+    try {
+      const payload = {
+        date: session.date,
+        tripName: session.tripName,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        elapsed: session.elapsed,
+        mpptSet: session.mpptSet,
+        batt1AnalyzerStartV: session.batt1AnalyzerStartV,
+        batt1AnalyzerEndV: session.batt1AnalyzerEndV,
+        batt1AnalyzerVGain: session.batt1AnalyzerVGain,
+        batt1WhGain: session.batt1WhGain,
+        batt2AnalyzerStartV: session.batt2AnalyzerStartV,
+        batt2AnalyzerEndV: session.batt2AnalyzerEndV,
+        batt2AnalyzerVGain: session.batt2AnalyzerVGain,
+        batt2WhGain: session.batt2WhGain,
+        totalWh: session.totalWh,
+        bikeStartV: session.bikeStartV,
+        bikeEndV: session.bikeEndV,
+        bikeVGain: session.bikeVGain,
+        conditions: session.conditions,
+        tempRange: session.tempRange,
+        elevation: session.elevation,
+        notes: session.notes
+      };
+
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      attemptCount++;
+    } catch (err) {
+      console.error('Sync failed for session', session.id, err);
+      errorCount++;
+    }
+  }
+
+  // NOTE: Sessions are NOT marked synced automatically.
+  // You must verify data in Google Sheets, then manually clear sessions.
+  localStorage.setItem('ub_sessions', JSON.stringify(sessions));
+  renderLog();
+  updatePendingBadge();
+  btn.textContent = '☁ SYNC TO SHEETS';
+  btn.disabled = false;
+
+  if (errorCount > 0) {
+    alert(`⚠ ${errorCount} session(s) failed to send. Check your connection and try again.\n\nSessions remain PENDING until you verify and manually clear them.`);
+  } else {
+    alert(`✓ Sent ${attemptCount} session(s) to Google Sheets.\n\nIMPORTANT: Open your Google Sheet and verify the data looks correct before clearing sessions from this app.`);
+  }
+}
+</script>
+</body>
+</html>
